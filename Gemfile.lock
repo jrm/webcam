@@ -1,0 +1,27 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    av_capture (1.0.2)
+    bindata (1.8.3)
+    concurrent-ruby (1.1.4)
+    curses (1.2.7)
+    log_switch (1.0.0)
+    rainbow (3.0.0)
+    rmagick (2.16.0)
+    rtp (0.1.5)
+      bindata (~> 1.4)
+      log_switch (>= 0.4.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  av_capture
+  concurrent-ruby
+  curses
+  rainbow
+  rmagick
+  rtp
+
+BUNDLED WITH
+   2.0.1
