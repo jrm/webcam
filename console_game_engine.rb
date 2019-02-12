@@ -1,9 +1,11 @@
 require "bundler"
 require "curses"
+require "json"
 
 Bundler.require(:default)
 
 module ConsoleGameEngine
+
   module COLOUR
   	FG_BLACK		    = 0x0000
   	FG_DARK_BLUE    = 0x0001
@@ -116,6 +118,7 @@ module ConsoleGameEngine
       @screen_height = opts[:screen_height] || 30
       @step = opts[:step] || 0.05
       @app_name = opts[:app_name] || "My Game"
+      @colour_db = opts[:colour_db] || 'material-colors.json'
       @active = Concurrent::Atom.new(false)
       @time_point_1 = 0
       @time_point_2 = 0
@@ -298,13 +301,16 @@ module ConsoleGameEngine
     end
 
     def create_console(width, height, font_width = nil, font_height = nil)
+      if Curses.has_colors? && Curses.can_change_color?
+        Curses.start_color
+      end
       @screen_width = width
       @screen_height = height
       @window = Curses::Window.new(@screen_height, @screen_width, 0, 0)
       @window.keypad = true
       @window.timeout = 5
       @window.nodelay = true
-      @screen_buffer = Array.new(@screen_width * @screen_height - 1) { {character: PIXEL_SOLID, colour: FG_BLACK} }
+      @screen_buffer = Array.new(@screen_width * @screen_height - 1) { {character: PIXEL_SOLID, colour: 0} }
     end
 
     private
@@ -319,8 +325,9 @@ module ConsoleGameEngine
         on_user_update(@elapsed_time)
         @window.clear
         @screen_buffer.each do |c|
-          @window.addch(c[:character])
-          #@window.addch(c[:character].chr)
+          @window.attron(Curses.color_pair(c[:colour])) do
+            @window.addch(c[:character])
+          end
         end
         @window.refresh
         sleep(@step)

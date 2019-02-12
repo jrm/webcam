@@ -18,6 +18,7 @@ class WebCam < ConsoleGameEngine::Engine
     @session.add_output(output)
     @capture = AVCapture::Session::Capture.new output, output.video_connection
     @session.start_running!
+    @colours = {}
   end
 
   def on_user_update(elapsed_time)
@@ -28,13 +29,16 @@ class WebCam < ConsoleGameEngine::Engine
     image = image.scale(image.columns, image.rows / 1.7)
     image = image.quantize(8)
     image.each_pixel do |pixel, col, row|
-      #c = classify_pixel(pixel.to_HSL[0])
-      pixel_a = (pixel.to_HSL[0] * 10).to_int
-      pixel_b = (pixel.to_HSL[1] * 10).to_int
-      pixel_c = (pixel.to_HSL[2] * 10).to_int
-      c = ["0", "k", "x", "o", "u", "=", ":", "'", ".", " "][pixel_a & pixel_c] || "#{pixel_a}"
-      draw(col,row,c,'')
+      pixel_h, pixel_s, pixel_l = pixel.to_HSL.map{|v| (v * 10).to_i }
+      r,g,b = hsl_to_rgb(*pixel.to_HSL)
+      index = (pixel_l)
+      chars = [" ", ".", "'", ":", "=", "u", "o", "x", "k", "0"]
+      c = chars[index] || "*"
+      colour = get_colour(r,g,b)
+      draw(col,row,c,colour)
     end
+    status_string = "FPS=%3.2f C=%i" % [1.0/elapsed_time, @colours.size]
+    draw_string(0,0,status_string,0)
   end
 
   def hsl_to_rgb(h, s, v)
@@ -53,67 +57,19 @@ class WebCam < ConsoleGameEngine::Engine
     [(r*255).to_i, (g*255).to_i, (b*255).to_i]
   end
 
-  def classify_pixel(luminance)
-    pixel_bw = (luminance * 13).to_int
-    case pixel_bw
-    when 0
-      bg_col = BG_BLACK
-      fg_col = FG_BLACK
-      sym = PIXEL_SOLID
-    when 1
-      bg_col = BG_BLACK
-      fg_col = FG_DARK_GREY
-      sym = PIXEL_QUARTER
-    when 2
-      bg_col = BG_BLACK
-      fg_col = FG_DARK_GREY
-      sym = PIXEL_HALF
-    when 3
-      bg_col = BG_BLACK
-      fg_col = FG_DARK_GREY
-      sym = PIXEL_THREEQUARTERS
-    when 4
-      bg_col = BG_DARK_GREY
-      fg_col = FG_DARK_GREY
-      sym = PIXEL_SOLID
-    when 5
-      bg_col = BG_DARK_GREY
-      fg_col = FG_GREY
-      sym = PIXEL_QUARTER
-    when 6
-      bg_col = BG_DARK_GREY
-      fg_col = FG_GREY
-      sym = PIXEL_HALF
-    when 7
-      bg_col = BG_DARK_GREY
-      fg_col = FG_GREY
-      sym = PIXEL_THREEQUARTERS
-    when 8
-      bg_col = BG_DARK_GREY
-      fg_col = FG_GREY
-      sym = PIXEL_SOLID
-    when 9
-      bg_col = BG_GREY
-      fg_col = FG_WHITE
-      sym = PIXEL_QUARTER
-    when 10
-      bg_col = BG_GREY
-      fg_col = FG_WHITE
-      sym = PIXEL_HALF
-    when 11
-      bg_col = BG_GREY
-      fg_col = FG_WHITE
-      sym = PIXEL_THREEQUARTERS
-    when 12
-      bg_col = BG_GREY
-      fg_col = FG_WHITE
-      sym = PIXEL_SOLID
+  def get_colour(r,g,b)
+    number = (r * 255) + (g * 1000) + b
+    if @colours[number]
+      return number
+    else
+      colour_values = [r,g,b].map{|h| h / 0.255}.map(&:to_i)
+      Curses.init_color(number, *colour_values)
+      @colours[number] = colour_values
     end
-    #return  [bg_col, fg_col, sym]
-    return sym
+    return number
   end
 
 end
 
-webcam = WebCam.new(app_name: "James", screen_width: 160)
+webcam = WebCam.new(app_name: "WebCam", screen_width: 160, step: 0.05)
 webcam.start
