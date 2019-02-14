@@ -1,7 +1,7 @@
 require './console_game_engine.rb'
 require 'av_capture'
 require 'rmagick'
-require 'rainbow'
+require 'rgb'
 
 class WebCam < ConsoleGameEngine::Engine
 
@@ -19,6 +19,7 @@ class WebCam < ConsoleGameEngine::Engine
     @capture = AVCapture::Session::Capture.new output, output.video_connection
     @session.start_running!
     @colours = {}
+    Curses.init_pair(Curses::COLOR_GREEN,Curses::COLOR_GREEN,Curses::COLOR_BLACK)
   end
 
   def on_user_update(elapsed_time)
@@ -29,20 +30,22 @@ class WebCam < ConsoleGameEngine::Engine
     image = image.scale(image.columns, image.rows / 1.7)
     image = image.quantize(8)
     image.each_pixel do |pixel, col, row|
-      pixel_h, pixel_s, pixel_l = pixel.to_HSL.map{|v| (v * 10).to_i }
-      r,g,b = hsl_to_rgb(*pixel.to_HSL)
-      index = (pixel_l)
+      pixel_h, pixel_s, pixel_l, pixel_a = pixel.to_hsla
+      #color_hex = pixel.to_color(Magick::AllCompliance, false, 8, 8)
+      #color = RGB::Color.from_rgb_hex(color_hex)
+      #colour = get_colour(color)
+      colour = Curses::COLOR_GREEN
+      index = (pixel_l / 255.0 * 10).to_i
       chars = [" ", ".", "'", ":", "=", "u", "o", "x", "k", "0"]
       c = chars[index] || "*"
-      colour = get_colour(r,g,b)
       draw(col,row,c,colour)
     end
-    status_string = "FPS=%3.2f C=%i" % [1.0/elapsed_time, @colours.size]
+    status_string = "FPS=%3.2f C=%s" % [1.0/elapsed_time, @colours.size]
     draw_string(0,0,status_string,0)
   end
 
-  def hsl_to_rgb(h, s, v)
-    h, s, v = h.to_f/360, s.to_f/100, v.to_f/100
+  def hsl_to_rgb(h, s, v, a)
+    h, s, v = h.to_f/360, s.to_f/255, v.to_f/255
     h_i = (h*6).to_i
     f = h*6 - h_i
     p = v * (1 - s)
@@ -57,14 +60,15 @@ class WebCam < ConsoleGameEngine::Engine
     [(r*255).to_i, (g*255).to_i, (b*255).to_i]
   end
 
-  def get_colour(r,g,b)
-    number = (r * 255) + (g * 1000) + b
-    if @colours[number]
-      return number
-    else
+  def get_colour(color)
+    r,g,b = color.to_rgb
+    number = 65536 * r + 256 * g + b
+    number = (number / 16777215.0 * 100).to_i
+    unless @colours[number]
+      @colours[number] = true
       colour_values = [r,g,b].map{|h| h / 0.255}.map(&:to_i)
-      Curses.init_color(number, *colour_values)
-      @colours[number] = colour_values
+      Curses.init_color(number,*colour_values)
+      Curses.init_pair(number,number,0)
     end
     return number
   end

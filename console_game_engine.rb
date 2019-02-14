@@ -118,7 +118,6 @@ module ConsoleGameEngine
       @screen_height = opts[:screen_height] || 30
       @step = opts[:step] || 0.05
       @app_name = opts[:app_name] || "My Game"
-      @colour_db = opts[:colour_db] || 'material-colors.json'
       @active = Concurrent::Atom.new(false)
       @time_point_1 = 0
       @time_point_2 = 0

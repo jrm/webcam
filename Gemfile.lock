@@ -6,7 +6,7 @@ GEM
     concurrent-ruby (1.1.4)
     curses (1.2.7)
     log_switch (1.0.0)
-    rainbow (3.0.0)
+    rgb (0.1.0)
     rmagick (2.16.0)
     rtp (0.1.5)
       bindata (~> 1.4)
@@ -19,9 +19,9 @@ DEPENDENCIES
   av_capture
   concurrent-ruby
   curses
-  rainbow
+  rgb
   rmagick
   rtp
 
 BUNDLED WITH
-   1.16.0
+   2.0.1
