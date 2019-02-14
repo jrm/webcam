@@ -1,3 +1,5 @@
+#Ported from https://github.com/OneLoneCoder
+
 require "bundler"
 require "curses"
 require "json"
